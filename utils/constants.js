@@ -1,0 +1,1 @@
+exports.EMPTY_STRING = '';
