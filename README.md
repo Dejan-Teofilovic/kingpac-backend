@@ -1,19 +1,25 @@
 # The Backend of KING Pacman site
 
-## Live site
-[![Live site](live-site.png)](https://kingpacktoken.com)
+## Live sites
+[![Live site](live-site-1.png)](https://kingpacktoken.com)
+
+[![Live site](live-site-2.png)](https://kingpacktoken.com)
 
 ## Contact info
 - **Email:** mr.new0509@gmail.com
 - **Telegram:** [@mrnew0509](https://t.me/mrnew0509)
 - **Skype:** sin085
 
-## Stack
-- **Framework:** `Express.js`
-- **Database:** `MySQL`
-
 ## Release date
 May 27, 2022
+
+## Environment
+- `Node.js v14.17.0`
+- `MySQL v8.0.27`
+
+## Stack
+- **Framework:** `Express.js v4.17.3`
+- **Database:** `MySQL`
 
 ## How to run the game.
 1. Please open terminal window in the root directory.

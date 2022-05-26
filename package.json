@@ -1,23 +1,23 @@
 {
-  "name": "express-fresh",
+  "name": "kingpac-backend",
   "version": "1.0.0",
   "description": "Fresh express skeleton to be the backend of the MERN or MEVN.",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "nodemon server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mr-new-0509/express-fresh.git"
+    "url": "git+https://github.com/mr-new-0509/kingpac-backend.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/mr-new-0509/express-fresh/issues"
+    "url": "https://github.com/mr-new-0509/kingpac-backend/issues"
   },
-  "homepage": "https://github.com/mr-new-0509/express-fresh#readme",
+  "homepage": "https://github.com/mr-new-0509/kingpac-backend#readme",
   "dependencies": {
     "axios": "^0.26.0",
     "config": "^3.3.7",
