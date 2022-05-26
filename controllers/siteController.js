@@ -1,7 +1,12 @@
 const { EMPTY_STRING } = require("../utils/constants");
 const db = require("../utils/db");
 
-//  Get userdata
+/**
+ * Get userdata
+ * @param {*} req request from frontend
+ * @param {*} res response to backend
+ * @returns response object
+ */
 exports.getUserdata = async (req, res) => {
   const { walletAddress } = req.params;
 
@@ -29,7 +34,12 @@ exports.getUserdata = async (req, res) => {
   }
 };
 
-//  Register a new user and respond registered his 
+/**
+ * Register a new user and respond registered his data
+ * @param {*} req request from frontend
+ * @param {*} res response to backend
+ * @returns response object
+ */
 exports.registerUser = async (req, res) => {
   let idSocialUsername = 0;
   let idWalletAddress = 0;
