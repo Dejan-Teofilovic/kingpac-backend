@@ -22,6 +22,7 @@ app.use(express.json());
 
 // Define Routes
 app.use('/api/site', require('./routes/siteRoutes'));
+app.use('/api/game', require('./routes/gameRoutes'));
 
 // if (process.env.NODE_ENV === 'production') {
 //   // Set static folder

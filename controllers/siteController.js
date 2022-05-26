@@ -67,7 +67,7 @@ exports.registerUser = async (req, res) => {
   `));
   idGameData = insertedGameData.insertId;
 
-  return res.status(200).json({
+  return res.status(201).json({
     idWalletAddress,
     idSocialUsername,
     idGameData,
