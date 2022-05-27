@@ -94,9 +94,10 @@ exports.saveWinners = async (req, res) => {
     const winnersOfThisWeek = (await db.query(`
       SELECT 
         game_data.id_wallet_address,
+        wallet_addresses.id_social_username,
         wallet_addresses.balance,
         game_data.current_level
-      FROM wallet_addresses
+        FROM wallet_addresses
       LEFT JOIN game_data ON wallet_addresses.id = game_data.id_wallet_address
       WHERE wallet_addresses.wallet_address = '${walletAddress}'
       ORDER BY game_data.current_level DESC, game_data.current_level DESC
@@ -116,16 +117,24 @@ exports.saveWinners = async (req, res) => {
 
     //  Give the default winners their data randomly
     for (let i = 0; i < ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS.length; i += 1) {
+      let walletAddressData = null;
+
       //  completed_level
       winnersOfThisWeek[randomRanks[i]].current_level = await getRandomCompletedLevel(randomRanks[i], winnersOfThisWeek);
 
       //  id_wallet_address
       winnersOfThisWeek[randomRanks[i]].id_wallet_address = randomIdWalletAddress[i];
 
+      walletAddressData = (await db.query(`
+        SELECT balance, id_social_username
+        FROM wallet_addresses WHERE id_wallet_address = ${winnersOfThisWeek[randomRanks[i]].id_wallet_address};
+      `))[0];
+
+      //  id_social_username
+      winnersOfThisWeek[randomRanks[i]].id_social_username = walletAddressData.id_social_username;
+
       //  balance
-      winnersOfThisWeek[randomRanks[i]].balance = (await db.query(`
-        SELECT balance FROM wallet_addresses WHERE id_wallet_address = ${winnersOfThisWeek[randomRanks[i]].id_wallet_address};
-      `))[0].balance;
+      winnersOfThisWeek[randomRanks[i]].balance = walletAddressData.balance;
     }
 
     /* ==================================================================================== */
@@ -146,30 +155,93 @@ exports.saveWinners = async (req, res) => {
 
     //  Insert winners of last week into table 'winners_of_last_week'
     for (let i = 0; i < winnersOfLastWeek.length; i += 1) {
-      let { id_wallet_address, rank, reward, completed_level, balance } = winnersOfLastWeek[i];
+      let { id_wallet_address, id_social_username, rank, reward, completed_level, balance } = winnersOfLastWeek[i];
       await db.query(`
-        INSERT INTO winners_of_last_week (id_wallet_address, rank, reward, completed_level, balance)
-        VALUES (${id_wallet_address}, ${rank}, ${reward}, ${completed_level}, ${balance});
+        INSERT INTO winners_of_last_week (id_wallet_address, id_social_username, rank, reward, completed_level, balance)
+        VALUES (${id_wallet_address}, ${id_social_username}, ${rank}, ${reward}, ${completed_level}, ${balance});
       `);
     }
 
     //  Insert winners of this week into table 'winners_of_this_week'
     for (let i = 0; i < winnersOfThisWeek.length; i += 1) {
       let reward = 0;
-      let { id_wallet_address, balance, current_level } = winnersOfThisWeek[i];
+      let { id_wallet_address, id_social_username, balance, current_level } = winnersOfThisWeek[i];
       let { rewardPercentage } = rewardPercentages[i];
 
       reward = balanceOfRewardPool * rewardPercentage / 100;
       await db.query(`
-        INSERT INTO winners_of_this_week (id_wallet_address, rank, reward, completed_level, balance)
-        VALUES(${id_wallet_address}, ${i + 1}, ${Number(reward.toFixed(2))}, ${current_level}, ${balance});
+        INSERT INTO winners_of_this_week (id_wallet_address, id_social_username, rank, reward, completed_level, balance)
+        VALUES(${id_wallet_address}, ${id_social_username}, ${i + 1}, ${Number(reward.toFixed(2))}, ${current_level}, ${balance});
       `);
     }
 
-    return res.status(200).send('')
+    return res.status(200).send('');
   } catch (error) {
     return res.status(500).send('');
   }
+};
+
+/**
+ * Get winners of this week or last one
+ * @param {*} req Request from frontend
+ * @param {*} res Response to frontend
+ * @returns Response object
+ */
+exports.getWinners = async (req, res) => {
+  let winners = null;
+  const { period } = req.params;
+
+  if (period == THIS_WEEK) {
+    winners = (await db.query(`
+      SELECT
+        winners_of_this_week.rank, 
+        wallet_addresses.wallet_address AS walletAddress,
+        social_usernames.twitter_username AS twitterUsername,
+        social_usernames.telegram_username AS telegramUsername,
+        winners_of_this_week.balance,
+        winners_of_this_week.reward,
+        winners_of_this_week.completed_level AS completedLevel
+      FROM winners_of_this_week
+      LEFT JOIN wallet_addresses ON winners_of_this_week.id_wallet_address = wallet_address.id
+      LEFT JOIN social_usernames ON winners_of_this_week.id_social_username = social_usernames.id;
+    `));
+  } else {
+    winners = (await db.query(`
+      SELECT
+        winners_of_last_week.rank, 
+        wallet_addresses.wallet_address AS walletAddress,
+        social_usernames.twitter_username AS twitterUsername,
+        social_usernames.telegram_username AS telegramUsername,
+        winners_of_last_week.balance,
+        winners_of_last_week.reward,
+        winners_of_last_week.completed_level AS completedLevel
+      FROM winners_of_last_week
+      LEFT JOIN wallet_addresses ON winners_of_last_week.id_wallet_address = wallet_address.id
+      LEFT JOIN social_usernames ON winners_of_last_week.id_social_username = social_usernames.id;
+    `));
+  }
+
+  return res.status(200).send(winners);
+};
+
+/**
+ * Update balance of wallet_addresses
+ * @param {*} req Request from frontend
+ * @param {*} res Response to frontend
+ */
+exports.updateBalance = async (req, res) => {
+  const { id_wallet_address } = req.params;
+  const { balance } = req.body;
+
+  db.query(`
+    UPDATE wallet_addresses SET balance = ${balance} WHERE id = ${id_wallet_address};
+  `, (error) => {
+    if (error) {
+      return res.status(501).send(EMPTY_STRING);
+    } else {
+      return res.status(200).send(EMPTY_STRING);
+    }
+  });
 };
 
 /**
