@@ -204,7 +204,7 @@ exports.getWinners = async (req, res) => {
         winners_of_this_week.reward,
         winners_of_this_week.completed_level AS completedLevel
       FROM winners_of_this_week
-      LEFT JOIN wallet_addresses ON winners_of_this_week.id_wallet_address = wallet_address.id
+      LEFT JOIN wallet_addresses ON winners_of_this_week.id_wallet_address = wallet_addresses.id
       LEFT JOIN social_usernames ON winners_of_this_week.id_social_username = social_usernames.id;
     `));
     winnersOfLastWeek = (await db.query(`
@@ -217,11 +217,12 @@ exports.getWinners = async (req, res) => {
         winners_of_last_week.reward,
         winners_of_last_week.completed_level AS completedLevel
       FROM winners_of_last_week
-      LEFT JOIN wallet_addresses ON winners_of_last_week.id_wallet_address = wallet_address.id
+      LEFT JOIN wallet_addresses ON winners_of_last_week.id_wallet_address = wallet_addresses.id
       LEFT JOIN social_usernames ON winners_of_last_week.id_social_username = social_usernames.id;
     `));
     return res.status(200).send({ winnersOfThisWeek, winnersOfLastWeek });
-  } catch(error) {
+  } catch (error) {
+    console.log(error);
     return res.status(500).send('');
   }
 };
