@@ -190,11 +190,11 @@ exports.saveWinners = async (req, res) => {
  * @returns Response object
  */
 exports.getWinners = async (req, res) => {
-  let winners = null;
-  const { period } = req.params;
+  try {
+    let winnersOfThisWeek = null;
+    let winnersOfLastWeek = null;
 
-  if (period == THIS_WEEK) {
-    winners = (await db.query(`
+    winnersOfThisWeek = (await db.query(`
       SELECT
         winners_of_this_week.rank, 
         wallet_addresses.wallet_address AS walletAddress,
@@ -207,8 +207,7 @@ exports.getWinners = async (req, res) => {
       LEFT JOIN wallet_addresses ON winners_of_this_week.id_wallet_address = wallet_address.id
       LEFT JOIN social_usernames ON winners_of_this_week.id_social_username = social_usernames.id;
     `));
-  } else {
-    winners = (await db.query(`
+    winnersOfLastWeek = (await db.query(`
       SELECT
         winners_of_last_week.rank, 
         wallet_addresses.wallet_address AS walletAddress,
@@ -221,9 +220,10 @@ exports.getWinners = async (req, res) => {
       LEFT JOIN wallet_addresses ON winners_of_last_week.id_wallet_address = wallet_address.id
       LEFT JOIN social_usernames ON winners_of_last_week.id_social_username = social_usernames.id;
     `));
+    return res.status(200).send({ winnersOfThisWeek, winnersOfLastWeek });
+  } catch(error) {
+    return res.status(500).send('');
   }
-
-  return res.status(200).send(winners);
 };
 
 /**
