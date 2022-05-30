@@ -10,6 +10,8 @@ const db = require("../utils/db");
 exports.getUserdata = async (req, res) => {
   const { walletAddress } = req.params;
 
+  console.log(walletAddress);
+
   const userdata = (await db.query(`
     SELECT 
       game_data.id_wallet_address AS idWalletAddress,
