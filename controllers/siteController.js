@@ -1,4 +1,10 @@
-const { EMPTY_STRING, THIS_WEEK, ADDRESS_OF_REWARD_POOL, SCAN_API_KEY, ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS, LIMIT_SCOPE_OF_COMPLETED_LEVEL } = require("../utils/constants");
+const {
+  EMPTY_STRING,
+  ADDRESS_OF_REWARD_POOL,
+  SCAN_API_KEY,
+  ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS,
+  LIMIT_SCOPE_OF_COMPLETED_LEVEL
+} = require("../utils/constants");
 const db = require("../utils/db");
 
 /**
@@ -9,8 +15,6 @@ const db = require("../utils/db");
  */
 exports.getUserdata = async (req, res) => {
   const { walletAddress } = req.params;
-
-  console.log(walletAddress);
 
   const userdata = (await db.query(`
     SELECT 
@@ -233,11 +237,11 @@ exports.getWinners = async (req, res) => {
  * @param {*} res Response to frontend
  */
 exports.updateBalance = async (req, res) => {
-  const { id_wallet_address } = req.params;
+  const { idWalletAddress } = req.params;
   const { balance } = req.body;
 
   db.query(`
-    UPDATE wallet_addresses SET balance = ${balance} WHERE id = ${id_wallet_address};
+    UPDATE wallet_addresses SET balance = ${balance} WHERE id = ${idWalletAddress};
   `, (error) => {
     if (error) {
       return res.status(501).send(EMPTY_STRING);
