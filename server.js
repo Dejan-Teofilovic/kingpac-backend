@@ -3,8 +3,10 @@ const express = require('express');
 const path = require('path');
 const app = express();
 const cors = require('cors');
+const CronJob = require('cron').CronJob;
 const db = require('./utils/db');
-const { saveDefaultWinners } = require('./controllers/siteController');
+const { saveDefaultWinners, saveWinners } = require('./controllers/siteController');
+const { CRON_TIMEZONE } = require('./utils/constants');
 
 // Connect Database
 try {
@@ -34,20 +36,7 @@ app.use('/api/game', require('./routes/gameRoutes'));
 //  Insert default winners into db.
 saveDefaultWinners();
 
-// if (process.env.NODE_ENV === 'production') {
-//   // Set static folder
-//   app.use(express.static('client/build'));
-
-//   app.get('*', (req, res) => {
-//     res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
-//   });
-// }
-
-// app.use(express.static('client/build'));
-
-// app.get('*', (req, res) => {
-//   res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
-// });
+new CronJob('0 0 18 * * 5', saveWinners, null, true, CRON_TIMEZONE);
 
 const PORT = process.env.PORT || 5000;
 

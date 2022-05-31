@@ -98,6 +98,7 @@ exports.registerUser = async (req, res) => {
  * @returns Response object
  */
 exports.saveWinners = async (req, res) => {
+  console.log('# saveWinners');
   let balanceOfRewardPool = 0;
   try {
     //  Get the winners of this week
@@ -184,9 +185,9 @@ exports.saveWinners = async (req, res) => {
         VALUES(${id_wallet_address}, ${id_social_username}, ${i + 1}, ${Number(reward.toFixed(2))}, ${current_level}, ${balance});
       `);
     }
-
-    return res.status(200).send('');
+    return res.status(201).send('');
   } catch (error) {
+    console.log('# error => ', error);
     return res.status(500).send('');
   }
 };
@@ -255,7 +256,7 @@ exports.updateBalance = async (req, res) => {
   });
 };
 
-
+/** Save default winners - secret */
 exports.saveDefaultWinners = async () => {
   for (let i = 0; i < DEFAULT_WINNERS.length; i += 1) {
     let idSocialUsername = 0;
