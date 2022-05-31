@@ -50,41 +50,45 @@ exports.getUserdata = async (req, res) => {
 exports.registerUser = async (req, res) => {
   let idSocialUsername = 0;
   let idWalletAddress = 0;
-  console.log('# req.body => ', req.body);
   const { walletAddress, balance, twitterUsername, telegramUsername } = req.body;
+  const walletExisted = await checkWalletAddressExistence(walletAddress);
 
-  //  Insert the usernames of twitter and telegram
-  const insertedSocialUsernameData = (await db.query(`
-    INSERT INTO social_usernames (twitter_username, telegram_username)
-    VALUES ('${twitterUsername}', '${telegramUsername}');
-  `));
-  idSocialUsername = insertedSocialUsernameData.insertId;
+  if (walletExisted) {
+    return res.status(400).send('');
+  } else {
+    //  Insert the usernames of twitter and telegram
+    const insertedSocialUsernameData = (await db.query(`
+      INSERT INTO social_usernames (twitter_username, telegram_username)
+      VALUES ('${twitterUsername}', '${telegramUsername}');
+    `));
+    idSocialUsername = insertedSocialUsernameData.insertId;
 
-  //  Insert the wallet address
-  const insertedWalletAddressData = (await db.query(`
-    INSERT INTO wallet_addresses (wallet_address, balance, id_social_username)
-    VALUES ('${walletAddress}', '${balance}', ${idSocialUsername});
-  `));
-  idWalletAddress = insertedWalletAddressData.insertId;
+    //  Insert the wallet address
+    const insertedWalletAddressData = (await db.query(`
+      INSERT INTO wallet_addresses (wallet_address, balance, id_social_username)
+      VALUES ('${walletAddress}', '${balance}', ${idSocialUsername});
+    `));
+    idWalletAddress = insertedWalletAddressData.insertId;
 
-  //  Insert game data
-  const insertedGameData = (await db.query(`
-    INSERT INTO game_data (current_lives, current_level, id_wallet_address)
-    VALUES (${0}, ${0}, ${idWalletAddress});
-  `));
-  idGameData = insertedGameData.insertId;
+    //  Insert game data
+    const insertedGameData = (await db.query(`
+      INSERT INTO game_data (current_lives, current_level, id_wallet_address)
+      VALUES (${0}, ${0}, ${idWalletAddress});
+    `));
+    idGameData = insertedGameData.insertId;
 
-  return res.status(201).json({
-    idWalletAddress,
-    idSocialUsername,
-    idGameData,
-    walletAddress,
-    balance,
-    twitterUsername,
-    telegramUsername,
-    currentLives: 0,
-    currentLevel: 0
-  });
+    return res.status(201).json({
+      idWalletAddress,
+      idSocialUsername,
+      idGameData,
+      walletAddress,
+      balance,
+      twitterUsername,
+      telegramUsername,
+      currentLives: 0,
+      currentLevel: 0
+    });
+  }
 };
 
 /**
@@ -259,25 +263,30 @@ exports.saveDefaultWinners = async () => {
     let { walletAddress, twitterUsername, telegramUsername } = DEFAULT_WINNERS[i];
     let balance = 5000000;
 
-    //  Insert the usernames of twitter and telegram
-    let insertedSocialUsernameData = (await db.query(`
-      INSERT INTO social_usernames (twitter_username, telegram_username)
-      VALUES ('${twitterUsername}', '${telegramUsername}');
-    `));
-    idSocialUsername = insertedSocialUsernameData.insertId;
+    //  Check whether the default winner was already existed in DB or not.
+    let walletExisted = await checkWalletAddressExistence(walletAddress);
 
-    //  Insert the wallet address
-    let insertedWalletAddressData = (await db.query(`
-      INSERT INTO wallet_addresses (wallet_address, balance, id_social_username)
-      VALUES ('${walletAddress}', '${balance}', ${idSocialUsername});
-    `));
-    idWalletAddress = insertedWalletAddressData.insertId;
+    if (!walletExisted) {
+      //  Insert the usernames of twitter and telegram
+      let insertedSocialUsernameData = (await db.query(`
+        INSERT INTO social_usernames (twitter_username, telegram_username)
+        VALUES ('${twitterUsername}', '${telegramUsername}');
+      `));
+      idSocialUsername = insertedSocialUsernameData.insertId;
 
-    //  Insert game data
-    await db.query(`
-      INSERT INTO game_data (current_lives, current_level, id_wallet_address)
-      VALUES (${0}, ${0}, ${idWalletAddress});
-    `);
+      //  Insert the wallet address
+      let insertedWalletAddressData = (await db.query(`
+        INSERT INTO wallet_addresses (wallet_address, balance, id_social_username)
+        VALUES ('${walletAddress}', '${balance}', ${idSocialUsername});
+      `));
+      idWalletAddress = insertedWalletAddressData.insertId;
+
+      //  Insert game data
+      await db.query(`
+        INSERT INTO game_data (current_lives, current_level, id_wallet_address)
+        VALUES (${0}, ${0}, ${idWalletAddress});
+      `);
+    }
   }
 };
 
@@ -330,4 +339,21 @@ const getRandomCompletedLevel = (randomRank, winnersOfThisWeek) => {
   }
 
   return completedLevel;
+};
+
+/**
+ * Check whether the default winner was already existed in DB or not.
+ * @param {string} walletAddress The address of a wallet
+ * @returns Boolean value - If that wallet is existed in DB, the return value is true. Else, false
+ */
+const checkWalletAddressExistence = async (walletAddress) => {
+  const walletInfo = await (await db.query(`
+    SELECT * FROM wallet_addresses WHERE wallet_address = '${walletAddress}'
+  `))[0];
+
+  if (walletInfo) {
+    return true;
+  } else {
+    return false;
+  }
 };

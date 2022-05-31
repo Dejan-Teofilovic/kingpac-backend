@@ -31,6 +31,7 @@ app.use(express.json());
 app.use('/api/site', require('./routes/siteRoutes'));
 app.use('/api/game', require('./routes/gameRoutes'));
 
+//  Insert default winners into db.
 saveDefaultWinners();
 
 // if (process.env.NODE_ENV === 'production') {
