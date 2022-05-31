@@ -36,7 +36,7 @@ exports.getUserdata = async (req, res) => {
   if (userdata) {
     return res.status(200).send(userdata);
   } else {
-    return res.status(400).send(EMPTY_STRING);
+    return res.status(404).send(EMPTY_STRING);
   }
 };
 
@@ -49,7 +49,7 @@ exports.getUserdata = async (req, res) => {
 exports.registerUser = async (req, res) => {
   let idSocialUsername = 0;
   let idWalletAddress = 0;
-
+  console.log('# req.body => ', req.body);
   const { walletAddress, balance, twitterUsername, telegramUsername } = req.body;
 
   //  Insert the usernames of twitter and telegram
