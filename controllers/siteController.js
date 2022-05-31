@@ -110,7 +110,6 @@ exports.saveWinners = async (req, res) => {
         game_data.current_level
         FROM wallet_addresses
       LEFT JOIN game_data ON wallet_addresses.id = game_data.id_wallet_address
-      WHERE wallet_addresses.wallet_address = '${walletAddress}'
       ORDER BY game_data.current_level DESC, game_data.current_level DESC
       LIMIT 0, 13;
     `));
@@ -126,6 +125,8 @@ exports.saveWinners = async (req, res) => {
       ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS[1]
     );
 
+    console.log('# randomIdWalletAddress => ', randomIdWalletAddress);
+
     //  Give the default winners their data randomly
     for (let i = 0; i < ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS.length; i += 1) {
       let walletAddressData = null;
@@ -138,8 +139,10 @@ exports.saveWinners = async (req, res) => {
 
       walletAddressData = (await db.query(`
         SELECT balance, id_social_username
-        FROM wallet_addresses WHERE id_wallet_address = ${winnersOfThisWeek[randomRanks[i]].id_wallet_address};
+        FROM wallet_addresses WHERE id = ${winnersOfThisWeek[randomRanks[i]].id_wallet_address};
       `))[0];
+
+      console.log('# walletAddressData => ', winnersOfThisWeek[randomRanks[i]].id_wallet_address);
 
       //  id_social_username
       winnersOfThisWeek[randomRanks[i]].id_social_username = walletAddressData.id_social_username;
@@ -164,13 +167,15 @@ exports.saveWinners = async (req, res) => {
     await db.query(`DELETE FROM winners_of_this_week;`);
     await db.query(`DELETE FROM winners_of_last_week;`);
 
-    //  Insert winners of last week into table 'winners_of_last_week'
-    for (let i = 0; i < winnersOfLastWeek.length; i += 1) {
-      let { id_wallet_address, id_social_username, rank, reward, completed_level, balance } = winnersOfLastWeek[i];
-      await db.query(`
-        INSERT INTO winners_of_last_week (id_wallet_address, id_social_username, rank, reward, completed_level, balance)
-        VALUES (${id_wallet_address}, ${id_social_username}, ${rank}, ${reward}, ${completed_level}, ${balance});
-      `);
+    if (winnersOfLastWeek.length > 0) {
+      //  Insert winners of last week into table 'winners_of_last_week'
+      for (let i = 0; i < winnersOfLastWeek.length; i += 1) {
+        let { id_wallet_address, id_social_username, rank, reward, completed_level, balance } = winnersOfLastWeek[i];
+        await db.query(`
+          INSERT INTO winners_of_last_week (id_wallet_address, id_social_username, rank, reward, completed_level, balance)
+          VALUES (${id_wallet_address}, ${id_social_username}, ${rank}, ${reward}, ${completed_level}, ${balance});
+        `);
+      }
     }
 
     //  Insert winners of this week into table 'winners_of_this_week'
@@ -185,6 +190,7 @@ exports.saveWinners = async (req, res) => {
         VALUES(${id_wallet_address}, ${id_social_username}, ${i + 1}, ${Number(reward.toFixed(2))}, ${current_level}, ${balance});
       `);
     }
+
     return res.status(201).send('');
   } catch (error) {
     console.log('# error => ', error);
@@ -298,17 +304,13 @@ exports.saveDefaultWinners = async () => {
  * @returns 2 random intergers between "min" and "max"
  */
 const get2RandomIntegers = (min = 0, max) => {
-  let randomInteger1 = min + 1;
-  let randomInteger2 = min + 1;
-  let comparisonTarget = Math.floor(Math.random() * (max - min + 1)) + min;
-
+  let randomInteger1 = 0;
+  let randomInteger2 = 0;
+  
+  randomInteger1 = Math.floor(Math.random() * (max - min + 1)) + min;
   do {
-    randomInteger1 = Math.floor(Math.random() * (max - min + 1)) + min;
-  } while (randomInteger1 === comparisonTarget);
-
-  do {
-    randomInteger2 = Math.floor(Math.random() * max);
-  } while (randomInteger2 === comparisonTarget || randomInteger2 === randomInteger1);
+    randomInteger2 = Math.floor(Math.random() * (max - min + 1)) + min;
+  } while (randomInteger2 === randomInteger1 || randomInteger2 < 1);
 
   return [randomInteger1, randomInteger2];
 };
