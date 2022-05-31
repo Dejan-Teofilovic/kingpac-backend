@@ -4,7 +4,7 @@ const { getUserdata, registerUser, saveWinners, getWinners, updateBalance } = re
 
 router.get('/getUserdata/:walletAddress', getUserdata);
 router.post('/registerUser', registerUser);
-router.put('/saveWinners/:period', saveWinners);
+router.get('/saveWinners', saveWinners);
 router.get('/getWinners', getWinners);
 router.put('/updateBalance/:idWalletAddress', updateBalance);
 

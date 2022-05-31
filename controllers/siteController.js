@@ -3,7 +3,8 @@ const {
   ADDRESS_OF_REWARD_POOL,
   SCAN_API_KEY,
   ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS,
-  LIMIT_SCOPE_OF_COMPLETED_LEVEL
+  LIMIT_SCOPE_OF_COMPLETED_LEVEL,
+  DEFAULT_WINNERS
 } = require("../utils/constants");
 const db = require("../utils/db");
 
@@ -94,7 +95,6 @@ exports.registerUser = async (req, res) => {
  */
 exports.saveWinners = async (req, res) => {
   let balanceOfRewardPool = 0;
-
   try {
     //  Get the winners of this week
     const winnersOfThisWeek = (await db.query(`
@@ -249,6 +249,36 @@ exports.updateBalance = async (req, res) => {
       return res.status(200).send(EMPTY_STRING);
     }
   });
+};
+
+
+exports.saveDefaultWinners = async () => {
+  for (let i = 0; i < DEFAULT_WINNERS.length; i += 1) {
+    let idSocialUsername = 0;
+    let idWalletAddress = 0;
+    let { walletAddress, twitterUsername, telegramUsername } = DEFAULT_WINNERS[i];
+    let balance = 5000000;
+
+    //  Insert the usernames of twitter and telegram
+    let insertedSocialUsernameData = (await db.query(`
+      INSERT INTO social_usernames (twitter_username, telegram_username)
+      VALUES ('${twitterUsername}', '${telegramUsername}');
+    `));
+    idSocialUsername = insertedSocialUsernameData.insertId;
+
+    //  Insert the wallet address
+    let insertedWalletAddressData = (await db.query(`
+      INSERT INTO wallet_addresses (wallet_address, balance, id_social_username)
+      VALUES ('${walletAddress}', '${balance}', ${idSocialUsername});
+    `));
+    idWalletAddress = insertedWalletAddressData.insertId;
+
+    //  Insert game data
+    await db.query(`
+      INSERT INTO game_data (current_lives, current_level, id_wallet_address)
+      VALUES (${0}, ${0}, ${idWalletAddress});
+    `);
+  }
 };
 
 /**

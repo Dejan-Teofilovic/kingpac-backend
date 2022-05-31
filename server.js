@@ -4,6 +4,7 @@ const path = require('path');
 const app = express();
 const cors = require('cors');
 const db = require('./utils/db');
+const { saveDefaultWinners } = require('./controllers/siteController');
 
 // Connect Database
 try {
@@ -20,7 +21,7 @@ try {
 
 // Avoid cors error
 app.use(cors({
-    origin: '*'
+  origin: '*'
 }));
 
 // Init Middleware
@@ -29,6 +30,8 @@ app.use(express.json());
 // Define Routes
 app.use('/api/site', require('./routes/siteRoutes'));
 app.use('/api/game', require('./routes/gameRoutes'));
+
+saveDefaultWinners();
 
 // if (process.env.NODE_ENV === 'production') {
 //   // Set static folder
