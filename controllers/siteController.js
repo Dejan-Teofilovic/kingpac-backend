@@ -140,8 +140,6 @@ exports.saveWinners = async (req, res) => {
         FROM wallet_addresses WHERE id = ${winnersOfThisWeek[randomRanks[i]].id_wallet_address};
       `))[0];
 
-      console.log('# walletAddressData => ', winnersOfThisWeek[randomRanks[i]].id_wallet_address);
-
       //  id_social_username
       winnersOfThisWeek[randomRanks[i]].id_social_username = walletAddressData.id_social_username;
 
@@ -178,13 +176,9 @@ exports.saveWinners = async (req, res) => {
 
     //  Insert winners of this week into table 'winners_of_this_week'
     for (let i = 0; i < winnersOfThisWeek.length; i += 1) {
-      console.log('# i => ', i);
       let reward = 0;
       let { id_wallet_address, id_social_username, balance, current_level } = winnersOfThisWeek[i];
-      console.log('# winnersOfThisWeek[i] => ', winnersOfThisWeek[i]);
-      // console.log('# current_level => ', current_level);
       let { reward_percentage } = rewardPercentages[i];
-      // console.log(`# reward_percentage => ${reward_percentage}`);
       reward = balanceOfRewardPool * reward_percentage / 100;
       await db.query(`
         INSERT INTO winners_of_this_week (id_wallet_address, id_social_username, winners_of_this_week.rank, reward, balance, completed_level)
@@ -194,7 +188,6 @@ exports.saveWinners = async (req, res) => {
 
     return res.status(201).send('');
   } catch (error) {
-    console.log('# error => ', error);
     return res.status(500).send('');
   }
 };
@@ -238,7 +231,6 @@ exports.getWinners = async (req, res) => {
     `));
     return res.status(200).send({ winnersOfThisWeek, winnersOfLastWeek });
   } catch (error) {
-    console.log(error);
     return res.status(500).send('');
   }
 };
@@ -341,7 +333,6 @@ const getRandomCompletedLevel = (randomRank, winnersOfThisWeek) => {
       Math.random() * (maxCompletedLevel - minCompletedLevel + 1)
     ) + minCompletedLevel;
   }
-  console.log('# completedLevel => ', completedLevel);
   return completedLevel;
 };
 
