@@ -27,6 +27,7 @@
     "express": "^4.17.3",
     "express-validator": "^6.14.0",
     "node-cron": "^3.0.0",
+    "node-fetch": "^2.6.7",
     "nodemon": "^2.0.16",
     "serverless-mysql": "^1.5.4"
   }

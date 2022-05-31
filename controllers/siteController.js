@@ -1,3 +1,4 @@
+const fetch = require('node-fetch');
 const {
   EMPTY_STRING,
   ADDRESS_OF_REWARD_POOL,
@@ -98,7 +99,6 @@ exports.registerUser = async (req, res) => {
  * @returns Response object
  */
 exports.saveWinners = async (req, res) => {
-  console.log('# saveWinners');
   let balanceOfRewardPool = 0;
   try {
     //  Get the winners of this week
@@ -108,7 +108,7 @@ exports.saveWinners = async (req, res) => {
         wallet_addresses.id_social_username,
         wallet_addresses.balance,
         game_data.current_level
-        FROM wallet_addresses
+      FROM wallet_addresses
       LEFT JOIN game_data ON wallet_addresses.id = game_data.id_wallet_address
       ORDER BY game_data.current_level DESC, game_data.current_level DESC
       LIMIT 0, 13;
@@ -124,8 +124,6 @@ exports.saveWinners = async (req, res) => {
       ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS[0],
       ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS[1]
     );
-
-    console.log('# randomIdWalletAddress => ', randomIdWalletAddress);
 
     //  Give the default winners their data randomly
     for (let i = 0; i < ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS.length; i += 1) {
@@ -157,7 +155,7 @@ exports.saveWinners = async (req, res) => {
     const winnersOfLastWeek = (await db.query(`SELECT * FROM winners_of_this_week;`));
 
     //  Get the percentages of reward by rank
-    const rewardPercentages = (await db.query(`SELECT * FROM rank_reward;`));
+    const rewardPercentages = await db.query(`SELECT * FROM rank_reward;`);
 
     //  Get the balance of reward pool
     const balanceDataOfRewardPool = await (await fetch(`https://api.bscscan.com/api?module=account&action=balance&address=${ADDRESS_OF_REWARD_POOL}&tag=latest&apikey=${SCAN_API_KEY}`)).json();
@@ -172,22 +170,25 @@ exports.saveWinners = async (req, res) => {
       for (let i = 0; i < winnersOfLastWeek.length; i += 1) {
         let { id_wallet_address, id_social_username, rank, reward, completed_level, balance } = winnersOfLastWeek[i];
         await db.query(`
-          INSERT INTO winners_of_last_week (id_wallet_address, id_social_username, rank, reward, completed_level, balance)
-          VALUES (${id_wallet_address}, ${id_social_username}, ${rank}, ${reward}, ${completed_level}, ${balance});
+          INSERT INTO winners_of_last_week (id_wallet_address, id_social_username, winners_of_last_week.rank, reward, balance, completed_level)
+          VALUES (${id_wallet_address}, ${id_social_username}, ${rank}, ${reward}, ${balance}, ${completed_level});
         `);
       }
     }
 
     //  Insert winners of this week into table 'winners_of_this_week'
     for (let i = 0; i < winnersOfThisWeek.length; i += 1) {
+      console.log('# i => ', i);
       let reward = 0;
       let { id_wallet_address, id_social_username, balance, current_level } = winnersOfThisWeek[i];
-      let { rewardPercentage } = rewardPercentages[i];
-
-      reward = balanceOfRewardPool * rewardPercentage / 100;
+      console.log('# winnersOfThisWeek[i] => ', winnersOfThisWeek[i]);
+      // console.log('# current_level => ', current_level);
+      let { reward_percentage } = rewardPercentages[i];
+      // console.log(`# reward_percentage => ${reward_percentage}`);
+      reward = balanceOfRewardPool * reward_percentage / 100;
       await db.query(`
-        INSERT INTO winners_of_this_week (id_wallet_address, id_social_username, rank, reward, completed_level, balance)
-        VALUES(${id_wallet_address}, ${id_social_username}, ${i + 1}, ${Number(reward.toFixed(2))}, ${current_level}, ${balance});
+        INSERT INTO winners_of_this_week (id_wallet_address, id_social_username, winners_of_this_week.rank, reward, balance, completed_level)
+        VALUES(${id_wallet_address}, ${id_social_username}, ${i + 1}, ${Number(reward.toFixed(2))}, ${balance}, ${current_level - 1});
       `);
     }
 
@@ -306,7 +307,7 @@ exports.saveDefaultWinners = async () => {
 const get2RandomIntegers = (min = 0, max) => {
   let randomInteger1 = 0;
   let randomInteger2 = 0;
-  
+
   randomInteger1 = Math.floor(Math.random() * (max - min + 1)) + min;
   do {
     randomInteger2 = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -326,21 +327,21 @@ const getRandomCompletedLevel = (randomRank, winnersOfThisWeek) => {
   // Math.floor(Math.random() * (max - min + 1)) + min;
 
   if (randomRank == 0) {
-    let { completed_level } = winnersOfThisWeek[0];
+    let { current_level } = winnersOfThisWeek[0];
 
-    //  Get random completed_level
+    //  Get random current_level
     completedLevel = Math.floor(
-      Math.random() * (completed_level + LIMIT_SCOPE_OF_COMPLETED_LEVEL - completed_level + 1)
-    ) + completed_level;
+      Math.random() * (current_level + LIMIT_SCOPE_OF_COMPLETED_LEVEL - current_level + 1)
+    ) + current_level;
   } else {
-    let maxCompletedLevel = winnersOfThisWeek[randomRank - 1].completed_level;
-    let minCompletedLevel = winnersOfThisWeek[randomRank + 1].completed_level;
+    let maxCompletedLevel = winnersOfThisWeek[randomRank - 1].current_level;
+    let minCompletedLevel = winnersOfThisWeek[randomRank + 1].current_level;
 
     completedLevel = Math.floor(
       Math.random() * (maxCompletedLevel - minCompletedLevel + 1)
     ) + minCompletedLevel;
   }
-
+  console.log('# completedLevel => ', completedLevel);
   return completedLevel;
 };
 
