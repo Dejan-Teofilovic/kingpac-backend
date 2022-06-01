@@ -21,3 +21,5 @@ exports.TOKEN_CONTRACT_ADDRESS = '0xe705c3f34bbf38e1e298b65a7668fd5d9cdc0816';
 exports.SCAN_API_KEY = 'MQPQP1JFJXGA72RYM5SRSR45YBDBZ7ADXX';
 
 exports.CRON_TIMEZONE = 'Atlantic/Azores';
+
+exports.JWT_SECRET_KEY = 'kingpac';

@@ -1,11 +1,13 @@
 const fetch = require('node-fetch');
+const jwt = require('jsonwebtoken');
 const {
   EMPTY_STRING,
   ADDRESS_OF_REWARD_POOL,
   SCAN_API_KEY,
   ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS,
   LIMIT_SCOPE_OF_COMPLETED_LEVEL,
-  DEFAULT_WINNERS
+  DEFAULT_WINNERS,
+  JWT_SECRET_KEY
 } = require("../utils/constants");
 const db = require("../utils/db");
 
@@ -288,6 +290,47 @@ exports.saveDefaultWinners = async () => {
       `);
     }
   }
+};
+
+/**
+ * Get access token from userdata
+ * @param {object} req Request from frontend
+ * @param {object} res Response from backend
+ * @returns Access token
+ */
+exports.getAccessToken = async (req, res) => {
+  const { idWalletAddress, idSocialUsername } = req.body;
+
+  try {
+    const userdata = (await db.query(`
+      SELECT 
+        game_data.id_wallet_address AS idWalletAddress,
+        game_data.id AS idGameData,
+        wallet_addresses.wallet_address AS walletAddress,
+        social_usernames.twitter_username AS twitterUsername,
+        social_usernames.telegram_username AS telegramUsername,
+        game_data.current_lives AS currentLives,
+        game_data.current_level AS currentLevel
+      FROM wallet_addresses
+      LEFT JOIN social_usernames ON wallet_addresses.id_social_username = social_usernames.id
+      LEFT JOIN game_data ON wallet_addresses.id = game_data.id_wallet_address
+      WHERE wallet_addresses.id = '${idWalletAddress}';
+    `))[0];
+
+    jwt.sign({ ...userdata, idSocialUsername }, JWT_SECRET_KEY, { expiresIn: '1 day' }, (error, accessToken) => {
+      if (error) {
+        console.log('# error => ', error);
+      }
+      return res.status(200).send(accessToken);
+    });
+  } catch (error) {
+    // console.log('# error => ', error);
+    return res.status(500).send('');
+  }
+};
+
+exports.getUserdataFromAccessToken = async (req, res) => {
+
 };
 
 /**
