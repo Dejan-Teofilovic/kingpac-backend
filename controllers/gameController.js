@@ -8,8 +8,8 @@ const db = require("../utils/db");
  * @param {*} res response to frontend
  */
 exports.saveGameData = (req, res) => {
-  const { idGameData } = req.params;
-  const { currentLives, currentLevel } = req.body;
+  const { currentLives, currentLevel, idGameData } = req.body;
+  console.log('# req.body => ', req.body);
 
   db.query(`
     UPDATE game_data 
@@ -31,6 +31,7 @@ exports.saveGameData = (req, res) => {
  */
 exports.getUserdataFromAccessToken = async (req, res) => {
   const { accessToken } = req.params;
+  console.log('# accessToken => ', accessToken);
   jwt.verify(accessToken, JWT_SECRET_KEY, (error, decoded) => {
     if (error) {
       return res.status(401).send('');

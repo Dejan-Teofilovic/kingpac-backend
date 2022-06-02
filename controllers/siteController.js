@@ -300,6 +300,7 @@ exports.saveDefaultWinners = async () => {
  */
 exports.getAccessToken = async (req, res) => {
   const { idWalletAddress, idSocialUsername } = req.body;
+  console.log('# idWalletAddress => ', idWalletAddress);
 
   try {
     const userdata = (await db.query(`
@@ -317,12 +318,22 @@ exports.getAccessToken = async (req, res) => {
       WHERE wallet_addresses.id = '${idWalletAddress}';
     `))[0];
 
-    jwt.sign({ ...userdata, idSocialUsername }, JWT_SECRET_KEY, { expiresIn: '1 day' }, (error, accessToken) => {
-      if (error) {
-        console.log('# error => ', error);
-      }
-      return res.status(200).send(accessToken);
-    });
+    if (userdata) {
+      const payload = {
+        userdata: {
+          ...userdata,
+          idSocialUsername
+        }
+      };
+      jwt.sign(payload, JWT_SECRET_KEY, { expiresIn: '1 day' }, (error, accessToken) => {
+        if (error) {
+          console.log('# error => ', error);
+        }
+        return res.status(200).send(accessToken);
+      });
+    } else {
+      return res.status(404).send('');
+    }
   } catch (error) {
     // console.log('# error => ', error);
     return res.status(500).send('');
