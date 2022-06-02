@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { saveGameData } = require('../controllers/gameController');
+const { saveGameData, getUserdataFromAccessToken } = require('../controllers/gameController');
 
 router.put('/saveGameData/:idGameData', saveGameData);
+router.get('/getUserdataFromAccessToken/:accessToken', getUserdataFromAccessToken);
 
 module.exports = router;

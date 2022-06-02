@@ -329,10 +329,6 @@ exports.getAccessToken = async (req, res) => {
   }
 };
 
-exports.getUserdataFromAccessToken = async (req, res) => {
-
-};
-
 /**
  * Get 2 random ranks between "min" and "max"
  * @param {*} min The minimum value of random scope
