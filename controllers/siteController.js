@@ -152,10 +152,8 @@ exports.saveWinners = async (req, res) => {
 
     /* ==================================================================================== */
 
-    console.log('# winnersOfThisWeek => ', winnersOfThisWeek);
-
     //  Get the winners of last week
-    const winnersOfLastWeek = (await db.query(`SELECT * FROM winners_of_this_week;`));
+    const winnersOfLastWeek = await db.query(`SELECT * FROM winners_of_this_week;`);
 
     //  Get the percentages of reward by rank
     const rewardPercentages = await db.query(`SELECT * FROM rank_reward;`);
@@ -168,28 +166,33 @@ exports.saveWinners = async (req, res) => {
     await db.query(`DELETE FROM winners_of_this_week;`);
     await db.query(`DELETE FROM winners_of_last_week;`);
 
+    //  Insert winners of last week into table 'winners_of_last_week'
     if (winnersOfLastWeek.length > 0) {
-      //  Insert winners of last week into table 'winners_of_last_week'
-      for (let i = 0; i < winnersOfLastWeek.length; i += 1) {
-        let { id_wallet_address, id_social_username, rank, reward, completed_level, balance } = winnersOfLastWeek[i];
-        await db.query(`
-          INSERT INTO winners_of_last_week (id_wallet_address, id_social_username, winners_of_last_week.rank, reward, balance, completed_level)
-          VALUES (${id_wallet_address}, ${id_social_username}, ${rank}, ${reward}, ${balance}, ${completed_level});
-        `);
-      }
+      (async () => {
+        let insertQueryOfLastWeek = 'INSERT INTO winners_of_last_week (id_wallet_address, id_social_username, winners_of_last_week.rank, reward, balance, completed_level) VALUES';
+
+        for (let i = 0; i < winnersOfLastWeek.length; i += 1) {
+          let { id_wallet_address, id_social_username, rank, reward, completed_level, balance } = winnersOfLastWeek[i];
+          insertQueryOfLastWeek += `(${id_wallet_address}, ${id_social_username}, ${rank}, ${reward}, ${balance}, ${completed_level}), `;
+        }
+        insertQueryOfLastWeek = insertQueryOfLastWeek.substring(0, insertQueryOfLastWeek.length - 2);
+        await db.query(insertQueryOfLastWeek);
+      })();
     }
 
     //  Insert winners of this week into table 'winners_of_this_week'
+    let insertQueryOfThisWeek = 'INSERT INTO winners_of_this_week (id_wallet_address, id_social_username, winners_of_this_week.rank, reward, balance, completed_level) VALUES';
     for (let i = 0; i < winnersOfThisWeek.length; i += 1) {
       let reward = 0;
       let { id_wallet_address, id_social_username, balance, current_level } = winnersOfThisWeek[i];
       let { reward_percentage } = rewardPercentages[i];
-      reward = balanceOfRewardPool * reward_percentage / 100;
-      await db.query(`
-        INSERT INTO winners_of_this_week (id_wallet_address, id_social_username, winners_of_this_week.rank, reward, balance, completed_level)
-        VALUES(${id_wallet_address}, ${id_social_username}, ${i + 1}, ${Number(reward.toFixed(2))}, ${balance}, ${current_level - 1});
-      `);
+      reward = balanceOfRewardPool * 10 ** -18 * reward_percentage / 100;
+
+      insertQueryOfThisWeek += `(${id_wallet_address}, ${id_social_username}, ${i + 1}, ${Number(reward.toFixed(2))}, ${balance}, ${current_level - 1}), `;
     }
+    insertQueryOfThisWeek = insertQueryOfThisWeek.substring(0, insertQueryOfThisWeek.length - 2);
+
+    await db.query(insertQueryOfThisWeek);
 
     return res.status(201).send('');
   } catch (error) {
@@ -303,7 +306,6 @@ exports.saveDefaultWinners = async () => {
  */
 exports.getAccessToken = async (req, res) => {
   const { idWalletAddress, idSocialUsername } = req.body;
-  console.log('# idWalletAddress => ', idWalletAddress);
 
   try {
     const userdata = (await db.query(`
@@ -338,7 +340,6 @@ exports.getAccessToken = async (req, res) => {
       return res.status(404).send('');
     }
   } catch (error) {
-    // console.log('# error => ', error);
     return res.status(500).send('');
   }
 };
