@@ -112,6 +112,7 @@ exports.saveWinners = async (req, res) => {
         game_data.current_level
       FROM wallet_addresses
       LEFT JOIN game_data ON wallet_addresses.id = game_data.id_wallet_address
+      WHERE wallet_addresses.id != 1 AND wallet_addresses.id != 2
       ORDER BY game_data.current_level DESC, game_data.current_level DESC
       LIMIT 0, 13;
     `));
@@ -150,6 +151,8 @@ exports.saveWinners = async (req, res) => {
     }
 
     /* ==================================================================================== */
+
+    console.log('# winnersOfThisWeek => ', winnersOfThisWeek);
 
     //  Get the winners of last week
     const winnersOfLastWeek = (await db.query(`SELECT * FROM winners_of_this_week;`));
