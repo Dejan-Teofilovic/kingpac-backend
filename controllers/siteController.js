@@ -111,11 +111,11 @@ exports.saveWinners = async (req, res) => {
         game_data.id_wallet_address,
         wallet_addresses.id_social_username,
         wallet_addresses.balance,
-        game_data.current_level
+        game_data.completed_max_level
       FROM wallet_addresses
       LEFT JOIN game_data ON wallet_addresses.id = game_data.id_wallet_address
       WHERE wallet_addresses.id != 1 AND wallet_addresses.id != 2
-      ORDER BY game_data.current_level DESC, game_data.current_level DESC
+      ORDER BY game_data.completed_max_level DESC, game_data.completed_max_level DESC
       LIMIT 0, 13;
     `));
 
@@ -135,7 +135,7 @@ exports.saveWinners = async (req, res) => {
       let walletAddressData = null;
 
       //  completed_level
-      winnersOfThisWeek[randomRanks[i]].current_level = await getRandomCompletedLevel(randomRanks[i], winnersOfThisWeek);
+      winnersOfThisWeek[randomRanks[i]].completed_max_level = await getRandomCompletedLevel(randomRanks[i], winnersOfThisWeek);
 
       //  id_wallet_address
       winnersOfThisWeek[randomRanks[i]].id_wallet_address = randomIdWalletAddress[i];
@@ -185,10 +185,10 @@ exports.saveWinners = async (req, res) => {
     let insertQueryOfThisWeek = 'INSERT INTO winners_of_this_week (id_wallet_address, id_social_username, winners_of_this_week.rank, reward, balance, completed_level) VALUES';
     for (let i = 0; i < winnersOfThisWeek.length; i += 1) {
       let reward = 0;
-      let { id_wallet_address, id_social_username, balance, current_level } = winnersOfThisWeek[i];
+      let { id_wallet_address, id_social_username, balance, completed_max_level } = winnersOfThisWeek[i];
       let { reward_percentage } = rewardPercentages[i];
       reward = balanceOfRewardPool * 10 ** -18 * reward_percentage / 100;
-      insertQueryOfThisWeek += `(${id_wallet_address}, ${id_social_username}, ${i + 1}, ${Number(reward.toFixed(2))}, ${balance}, ${current_level - 1}), `;
+      insertQueryOfThisWeek += `(${id_wallet_address}, ${id_social_username}, ${i + 1}, ${Number(reward.toFixed(2))}, ${balance}, ${completed_max_level - 1}), `;
     }
     insertQueryOfThisWeek = insertQueryOfThisWeek.substring(0, insertQueryOfThisWeek.length - 2);
     await db.query(insertQueryOfThisWeek);
@@ -372,15 +372,15 @@ const getRandomCompletedLevel = (randomRank, winnersOfThisWeek) => {
   // Math.floor(Math.random() * (max - min + 1)) + min;
 
   if (randomRank == 0) {
-    let { current_level } = winnersOfThisWeek[0];
+    let { completed_max_level } = winnersOfThisWeek[0];
 
-    //  Get random current_level
+    //  Get random completed_max_level
     completedLevel = Math.floor(
-      Math.random() * (current_level + LIMIT_SCOPE_OF_COMPLETED_LEVEL - current_level + 1)
-    ) + current_level;
+      Math.random() * (completed_max_level + LIMIT_SCOPE_OF_COMPLETED_LEVEL - completed_max_level + 1)
+    ) + completed_max_level;
   } else {
-    let maxCompletedLevel = winnersOfThisWeek[randomRank - 1].current_level;
-    let minCompletedLevel = winnersOfThisWeek[randomRank + 1].current_level;
+    let maxCompletedLevel = winnersOfThisWeek[randomRank - 1].completed_max_level;
+    let minCompletedLevel = winnersOfThisWeek[randomRank + 1].completed_max_level;
 
     completedLevel = Math.floor(
       Math.random() * (maxCompletedLevel - minCompletedLevel + 1)
