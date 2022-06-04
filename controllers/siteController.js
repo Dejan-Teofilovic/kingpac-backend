@@ -6,7 +6,7 @@ const {
   SCAN_API_KEY,
   ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS,
   LIMIT_SCOPE_OF_COMPLETED_LEVEL,
-  DEFAULT_WINNERS,
+  DEFAULT_USERS,
   JWT_SECRET_KEY
 } = require("../utils/constants");
 const db = require("../utils/db");
@@ -374,11 +374,11 @@ exports.updateBalance = async (req, res) => {
 };
 
 /** Save default winners - secret */
-exports.saveDefaultWinners = async () => {
-  for (let i = 0; i < DEFAULT_WINNERS.length; i += 1) {
+exports.saveDefaultUsers = async () => {
+  for (let i = 0; i < DEFAULT_USERS.length; i += 1) {
     let idSocialUsername = 0;
     let idWalletAddress = 0;
-    let { walletAddress, twitterUsername, telegramUsername } = DEFAULT_WINNERS[i];
+    let { walletAddress, twitterUsername, telegramUsername } = DEFAULT_USERS[i];
     let balance = 5000000;
 
     //  Check whether the default winner was already existed in DB or not.

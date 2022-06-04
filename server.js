@@ -5,7 +5,7 @@ const app = express();
 const cors = require('cors');
 const CronJob = require('cron').CronJob;
 const db = require('./utils/db');
-const { saveDefaultWinners, saveWinners, updateWinnersOfThisWeek } = require('./controllers/siteController');
+const { saveDefaultUsers, saveWinners, updateWinnersOfThisWeek } = require('./controllers/siteController');
 const { CRON_TIMEZONE } = require('./utils/constants');
 
 // Connect Database
@@ -34,7 +34,7 @@ app.use('/api/site', require('./routes/siteRoutes'));
 app.use('/api/game', require('./routes/gameRoutes'));
 
 //  Insert default winners into db.
-saveDefaultWinners();
+saveDefaultUsers();
 
 new CronJob('0 0 18 * * 5', saveWinners, null, true, CRON_TIMEZONE);
 new CronJob('*/20 * * * * *', updateWinnersOfThisWeek, null, true, CRON_TIMEZONE);
