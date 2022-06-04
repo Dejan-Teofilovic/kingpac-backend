@@ -13,11 +13,11 @@ exports.saveGameData = async (req, res) => {
 
   const { completedMaxLevel } = (await db.query(`SELECT completed_max_level AS completedMaxLevel FROM game_data WHERE id = ${idGameData};`))[0];
 
-  if (completedMaxLevel < currentLevel) {
+  if (completedMaxLevel < currentLevel - 1) {
     //  If a user update his/her completed max level
     query = `
       UPDATE game_data 
-      SET current_lives = ${currentLives}, current_level = ${currentLevel}, completed_max_level = ${currentLevel}
+      SET current_lives = ${currentLives}, current_level = ${currentLevel - 1}, completed_max_level = ${currentLevel - 1}
       WHERE id = ${idGameData};
     `;
   } else {

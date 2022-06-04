@@ -188,7 +188,7 @@ exports.saveWinners = async (req, res) => {
       let { id_wallet_address, id_social_username, balance, completed_max_level } = winnersOfThisWeek[i];
       let { reward_percentage } = rewardPercentages[i];
       reward = balanceOfRewardPool * 10 ** -18 * reward_percentage / 100;
-      insertQueryOfThisWeek += `(${id_wallet_address}, ${id_social_username}, ${i + 1}, ${Number(reward.toFixed(2))}, ${balance}, ${completed_max_level - 1}), `;
+      insertQueryOfThisWeek += `(${id_wallet_address}, ${id_social_username}, ${i + 1}, ${Number(reward.toFixed(2))}, ${balance}, ${completed_max_level}), `;
     }
     insertQueryOfThisWeek = insertQueryOfThisWeek.substring(0, insertQueryOfThisWeek.length - 2);
     await db.query(insertQueryOfThisWeek);
