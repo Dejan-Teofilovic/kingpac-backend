@@ -441,7 +441,7 @@ exports.getAccessToken = async (req, res) => {
           idSocialUsername
         }
       };
-      jwt.sign(payload, JWT_SECRET_KEY, { expiresIn: '1 day' }, (error, accessToken) => {
+      jwt.sign(payload, JWT_SECRET_KEY, { expiresIn: '60s' }, (error, accessToken) => {
         if (error) {
           console.log('# error => ', error);
         }
