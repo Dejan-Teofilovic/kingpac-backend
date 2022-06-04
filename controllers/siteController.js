@@ -30,7 +30,8 @@ exports.getUserdata = async (req, res) => {
       social_usernames.twitter_username AS twitterUsername,
       social_usernames.telegram_username AS telegramUsername,
       game_data.current_lives AS currentLives,
-      game_data.current_level AS currentLevel
+      game_data.current_level AS currentLevel,
+      game_data.completed_max_level AS completedMaxLevel
     FROM wallet_addresses
     LEFT JOIN social_usernames ON wallet_addresses.id_social_username = social_usernames.id
     LEFT JOIN game_data ON wallet_addresses.id = game_data.id_wallet_address
@@ -75,8 +76,8 @@ exports.registerUser = async (req, res) => {
 
     //  Insert game data
     const insertedGameData = (await db.query(`
-      INSERT INTO game_data (current_lives, current_level, id_wallet_address)
-      VALUES (${0}, ${0}, ${idWalletAddress});
+      INSERT INTO game_data (current_lives, current_level, completed_max_level, id_wallet_address)
+      VALUES (${0}, ${0}, ${0}, ${idWalletAddress});
     `));
     idGameData = insertedGameData.insertId;
 
@@ -89,7 +90,8 @@ exports.registerUser = async (req, res) => {
       twitterUsername,
       telegramUsername,
       currentLives: 0,
-      currentLevel: 0
+      currentLevel: 0,
+      completed_max_level: 0
     });
   }
 };
@@ -170,7 +172,6 @@ exports.saveWinners = async (req, res) => {
     if (winnersOfLastWeek.length > 0) {
       (async () => {
         let insertQueryOfLastWeek = 'INSERT INTO winners_of_last_week (id_wallet_address, id_social_username, winners_of_last_week.rank, reward, balance, completed_level) VALUES';
-
         for (let i = 0; i < winnersOfLastWeek.length; i += 1) {
           let { id_wallet_address, id_social_username, rank, reward, completed_level, balance } = winnersOfLastWeek[i];
           insertQueryOfLastWeek += `(${id_wallet_address}, ${id_social_username}, ${rank}, ${reward}, ${balance}, ${completed_level}), `;
@@ -187,11 +188,9 @@ exports.saveWinners = async (req, res) => {
       let { id_wallet_address, id_social_username, balance, current_level } = winnersOfThisWeek[i];
       let { reward_percentage } = rewardPercentages[i];
       reward = balanceOfRewardPool * 10 ** -18 * reward_percentage / 100;
-
       insertQueryOfThisWeek += `(${id_wallet_address}, ${id_social_username}, ${i + 1}, ${Number(reward.toFixed(2))}, ${balance}, ${current_level - 1}), `;
     }
     insertQueryOfThisWeek = insertQueryOfThisWeek.substring(0, insertQueryOfThisWeek.length - 2);
-
     await db.query(insertQueryOfThisWeek);
 
     return res.status(201).send('');
