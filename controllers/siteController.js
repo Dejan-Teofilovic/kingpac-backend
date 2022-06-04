@@ -133,23 +133,26 @@ exports.saveWinners = async (req, res) => {
     //  Give the default winners their data randomly
     for (let i = 0; i < ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS.length; i += 1) {
       let walletAddressData = null;
+      let winner = {};
 
       //  completed_level
-      winnersOfThisWeek[randomRanks[i]].completed_max_level = await getRandomCompletedLevel(randomRanks[i], winnersOfThisWeek);
+      winner.completed_max_level = await getRandomCompletedLevel(randomRanks[i], winnersOfThisWeek);
 
       //  id_wallet_address
-      winnersOfThisWeek[randomRanks[i]].id_wallet_address = randomIdWalletAddress[i];
+      winner.id_wallet_address = randomIdWalletAddress[i];
 
       walletAddressData = (await db.query(`
         SELECT balance, id_social_username
-        FROM wallet_addresses WHERE id = ${winnersOfThisWeek[randomRanks[i]].id_wallet_address};
+        FROM wallet_addresses WHERE id = ${winner.id_wallet_address};
       `))[0];
 
       //  id_social_username
-      winnersOfThisWeek[randomRanks[i]].id_social_username = walletAddressData.id_social_username;
+      winner.id_social_username = walletAddressData.id_social_username;
 
       //  balance
-      winnersOfThisWeek[randomRanks[i]].balance = walletAddressData.balance;
+      winner.balance = walletAddressData.balance;
+
+      winnersOfThisWeek.splice(randomRanks[i], 0, winner);
     }
 
     /* ==================================================================================== */
