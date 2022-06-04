@@ -7,15 +7,29 @@ const db = require("../utils/db");
  * @param {*} req request from frontend 
  * @param {*} res response to frontend
  */
-exports.saveGameData = (req, res) => {
+exports.saveGameData = async (req, res) => {
   const { currentLives, currentLevel, idGameData } = req.body;
-  console.log('# req.body => ', req.body);
+  let query = '';
 
-  db.query(`
-    UPDATE game_data 
-    SET current_lives = ${currentLives}, current_level = ${currentLevel}
-    WHERE id = ${idGameData}
-  `, (error) => {
+  const { completedMaxLevel } = (await db.query(`SELECT completed_max_level AS completedMaxLevel FROM game_data WHERE id = ${idGameData};`))[0];
+
+  if (completedMaxLevel < currentLevel) {
+    //  If a user update his/her completed max level
+    query = `
+      UPDATE game_data 
+      SET current_lives = ${currentLives}, current_level = ${currentLevel}, completed_max_level = ${currentLevel}
+      WHERE id = ${idGameData};
+    `;
+  } else {
+    //  Else
+    query = `
+      UPDATE game_data 
+      SET current_lives = ${currentLives}, current_level = ${currentLevel}
+      WHERE id = ${idGameData};
+    `;
+  }
+
+  db.query(query, (error) => {
     if (error) {
       return res.status(501).send(EMPTY_STRING);
     } else {
@@ -36,7 +50,6 @@ exports.getUserdataFromAccessToken = async (req, res) => {
     if (error) {
       return res.status(401).send('');
     } else {
-      console.log('# decoded => ', decoded);
       return res.status(200).send(decoded);
     }
   });
