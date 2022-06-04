@@ -37,7 +37,7 @@ app.use('/api/game', require('./routes/gameRoutes'));
 saveDefaultWinners();
 
 new CronJob('0 0 18 * * 5', saveWinners, null, true, CRON_TIMEZONE);
-new CronJob('*/60 * * * * *', updateWinnersOfThisWeek, null, true, CRON_TIMEZONE);
+new CronJob('*/20 * * * * *', updateWinnersOfThisWeek, null, true, CRON_TIMEZONE);
 
 const PORT = process.env.PORT || 5000;
 
