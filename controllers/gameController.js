@@ -29,6 +29,8 @@ exports.saveGameData = async (req, res) => {
     `;
   }
 
+  console.log('# query => ', query);
+
   db.query(query, (error) => {
     if (error) {
       return res.status(501).send(EMPTY_STRING);
