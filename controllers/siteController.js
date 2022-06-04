@@ -202,6 +202,7 @@ exports.saveWinners = async (req, res) => {
     console.log('# saveWinners => ', true);
     return true;
   } catch (error) {
+    console.log('# saveWinners.error => ', error);
     if (res) {
       return res.status(500).send(EMPTY_STRING);
     }
@@ -300,6 +301,7 @@ exports.updateWinnersOfThisWeek = async (req, res) => {
     console.log('# updateWinnersOfThisWeek => ', true);
     return true;
   } catch (error) {
+    console.log('# updateWinnersOfThisWeek.error => ', error);
     if (res) {
       return res.status(500).send(EMPTY_STRING);
     }
