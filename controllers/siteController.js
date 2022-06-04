@@ -290,8 +290,8 @@ exports.saveDefaultWinners = async () => {
 
       //  Insert game data
       await db.query(`
-        INSERT INTO game_data (current_lives, current_level, id_wallet_address)
-        VALUES (${0}, ${0}, ${idWalletAddress});
+        INSERT INTO game_data (current_lives, current_level, completed_max_level, id_wallet_address)
+        VALUES (${0}, ${0}, ${0}, ${idWalletAddress});
       `);
     }
   }
@@ -315,7 +315,8 @@ exports.getAccessToken = async (req, res) => {
         social_usernames.twitter_username AS twitterUsername,
         social_usernames.telegram_username AS telegramUsername,
         game_data.current_lives AS currentLives,
-        game_data.current_level AS currentLevel
+        game_data.current_level AS currentLevel,
+        game_data.completed_max_level AS completedMaxLevel
       FROM wallet_addresses
       LEFT JOIN social_usernames ON wallet_addresses.id_social_username = social_usernames.id
       LEFT JOIN game_data ON wallet_addresses.id = game_data.id_wallet_address
