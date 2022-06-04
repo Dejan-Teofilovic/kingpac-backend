@@ -48,6 +48,7 @@ exports.getUserdataFromAccessToken = async (req, res) => {
   console.log('# accessToken => ', accessToken);
   jwt.verify(accessToken, JWT_SECRET_KEY, (error, decoded) => {
     if (error) {
+      console.log('# getUserdataFromAccessToken error => ', error);
       return res.status(401).send('');
     } else {
       return res.status(200).send(decoded);
