@@ -28,12 +28,12 @@ exports.DEFAULT_USERS = [
   },
   {
     walletAddress: '0xE2A2C7d0c6C96ce29e8d7e1F0E5ced0AcA80D296',
-    twitterUsername: 'stevenhendren1',
+    twitterUsername: 'stevenhendren97',
     telegramUsername: 'stevenhendren1'
   },
   {
     walletAddress: '0x86485851027353E18e886da9d74f96bd8C8e55D0',
-    twitterUsername: 'ericmendelsonn',
+    twitterUsername: 'ericmendelsonnn',
     telegramUsername: 'ericmendelsonn'
   }
 ];
