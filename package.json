@@ -1,7 +1,7 @@
 {
   "name": "kingpac-backend",
   "version": "1.0.0",
-  "description": "Fresh express skeleton to be the backend of the MERN or MEVN.",
+  "description": "kingpac description",
   "main": "server.js",
   "scripts": {
     "start": "nodemon server",
