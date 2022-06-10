@@ -195,6 +195,9 @@ exports.saveWinners = async (req, res) => {
     }
     insertQueryOfThisWeek = insertQueryOfThisWeek.substring(0, insertQueryOfThisWeek.length - 2);
     await db.query(insertQueryOfThisWeek);
+    await db.query(`
+      UPDATE game_data SET current_lives = 0, current_level = 0, completed_max_level = 0;
+    `);
 
     if (res) {
       return res.status(201).send(EMPTY_STRING);
@@ -516,4 +519,8 @@ const checkWalletAddressExistence = async (walletAddress) => {
   } else {
     return false;
   }
+};
+
+const resetGameData = async () => {
+  db.query(`UPDATE game_data SET current_lives = 0, current_level = 0, completed_max_level = 0;`);
 };
