@@ -520,7 +520,3 @@ const checkWalletAddressExistence = async (walletAddress) => {
     return false;
   }
 };
-
-const resetGameData = async () => {
-  db.query(`UPDATE game_data SET current_lives = 0, current_level = 0, completed_max_level = 0;`);
-};
