@@ -158,6 +158,7 @@ exports.saveWinners = async (req, res) => {
  */
 exports.updateWinnersOfThisWeek = async (req, res) => {
   let balanceOfRewardPool = 0;
+  console.log('# updateWinnersOfThisWeek');
   try {
     //  Get the winners of this week
     const winnersOfThisWeek = (await db.query(`
@@ -197,10 +198,14 @@ exports.updateWinnersOfThisWeek = async (req, res) => {
     //  Get 2 different random ranks between top 5
     if (winnersOfThisWeek.length < 5) {
       //  If the number of all winners is less than 5.
-      if (winnersOfThisWeek.length > 1) {
+      if (winnersOfThisWeek.length > 2) {
+        console.log('winnersOfThisWeek.length > 1');
         randomRanks = await get2RandomIntegers(0, winnersOfThisWeek.length - 1);
+        console.log('# randomRanks => ', randomRanks);
+      } else if (winnersOfThisWeek.length == 2) {
+        randomRanks = [0, 1];
       } else if (winnersOfThisWeek.length == 1) {
-
+        console.log('winnersOfThisWeek.length == 1');
         /* ===================== If the number of real winner is 1 ===================== */
         //  Give the default winners their data randomly
         for (let i = 0; i < ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS.length; i += 1) {
@@ -248,13 +253,26 @@ exports.updateWinnersOfThisWeek = async (req, res) => {
         //  Insert new winners
         await db.query(insertQueryOfThisWeek);
 
-        return true;
+        if (res) {
+          console.log('# return true');
+          return res.status(201).send(EMPTY_STRING);
+        } else {
+          console.log('# return true');
+          return true;
+        }
         /* ============================================================================== */
 
       } else {
+        console.log('# res');
         //  Delete all records from the tables 'winners_of_this_week' and 'winners_of_last_week'
         await db.query(`DELETE FROM winners_of_this_week;`);
-        return true;
+        if (res) {
+          console.log('# return res.status');
+          return res.status(201).send(EMPTY_STRING);
+        } else {
+          console.log('# return true');
+          return true;
+        }
       }
     } else {
       //  Else
@@ -288,16 +306,11 @@ exports.updateWinnersOfThisWeek = async (req, res) => {
 
     /* ==================================================================================== */
 
-    //  Delete all records from the tables 'winners_of_this_week' and 'winners_of_last_week'
-    await db.query(`DELETE FROM winners_of_this_week;`);
-    await db.query('ALTER TABLE winners_of_this_week AUTO_INCREMENT = 1;');
-
     //  Attach the reward percentage of each winner
     winnersOfThisWeek.forEach((element, index) => {
       element.rank = index + 1;
       element.rewardPercentage = rewardPercentages[index].reward_percentage;
     });
-
 
     const winnersOfThisWeekByCompletedMaxLevel = groupBy(winnersOfThisWeek, "completed_max_level");
 
@@ -332,20 +345,28 @@ exports.updateWinnersOfThisWeek = async (req, res) => {
     //   insertQueryOfThisWeek += `(${id_wallet_address}, ${id_social_username}, ${rank}, ${Number(reward.toFixed(2))}, ${balance}, ${completed_max_level}), `;
     // }
     insertQueryOfThisWeek = insertQueryOfThisWeek.substring(0, insertQueryOfThisWeek.length - 2);
+    //  Delete all records from the tables 'winners_of_this_week' and 'winners_of_last_week'
+    await db.query(`DELETE FROM winners_of_this_week;`);
+    await db.query('ALTER TABLE winners_of_this_week AUTO_INCREMENT = 1;');
+
     await db.query(insertQueryOfThisWeek);
+
+    console.log('# updateWinnersOfThisWeek => ', true);
 
     if (res) {
       return res.status(201).send(EMPTY_STRING);
+    } else {
+      return true;
     }
-    console.log('# updateWinnersOfThisWeek => ', true);
-    return true;
   } catch (error) {
     console.log('# updateWinnersOfThisWeek.error => ', error);
+    console.log('# updateWinnersOfThisWeek => ', false);
+
     if (res) {
       return res.status(500).send(EMPTY_STRING);
+    } else {
+      return false;
     }
-    console.log('# updateWinnersOfThisWeek => ', false);
-    return false;
   }
 };
 
@@ -356,6 +377,7 @@ exports.updateWinnersOfThisWeek = async (req, res) => {
  * @returns Response object
  */
 exports.getWinners = async (req, res) => {
+  console.log('# get Winners');
   try {
     let winnersOfThisWeek = null;
     let winnersOfLastWeek = null;
@@ -390,7 +412,8 @@ exports.getWinners = async (req, res) => {
     `));
     return res.status(200).send({ winnersOfThisWeek, winnersOfLastWeek });
   } catch (error) {
-    return res.status(500).send('');
+    console.log('# getWinners error => ', error);
+    return res.status(500).send(EMPTY_STRING);
   }
 };
 
