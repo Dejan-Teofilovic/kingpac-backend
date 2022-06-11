@@ -5,12 +5,16 @@ const {
   ADDRESS_OF_REWARD_POOL,
   SCAN_API_KEY,
   ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS,
-  LIMIT_SCOPE_OF_COMPLETED_LEVEL,
   DEFAULT_USERS,
   JWT_SECRET_KEY
 } = require("../utils/constants");
 const db = require("../utils/db");
-const { groupBy } = require('../utils/functions');
+const {
+  groupBy,
+  get2RandomIntegers,
+  getRandomCompletedLevel,
+  checkWalletAddressExistence
+} = require('../utils/functions');
 
 /**
  * Get userdata
@@ -153,7 +157,6 @@ exports.saveWinners = async (req, res) => {
  * @returns Response object to frontend
  */
 exports.updateWinnersOfThisWeek = async (req, res) => {
-  console.log('# updateWinnersOfThisWeek');
   let balanceOfRewardPool = 0;
   try {
     //  Get the winners of this week
@@ -172,6 +175,16 @@ exports.updateWinnersOfThisWeek = async (req, res) => {
       LIMIT 0, 13;
     `));
 
+    //  Get the percentages of reward by rank
+    const rewardPercentages = await db.query(`SELECT * FROM rank_reward;`);
+
+    //  Get the balance of reward pool
+    const balanceDataOfRewardPool = await (await fetch(`https://api.bscscan.com/api?module=account&action=balance&address=${ADDRESS_OF_REWARD_POOL}&tag=latest&apikey=${SCAN_API_KEY}`)).json();
+    balanceOfRewardPool = Number(balanceDataOfRewardPool.result) * 10 ** -18;
+
+    //  Insert winners of this week into table 'winners_of_this_week'
+    let insertQueryOfThisWeek = 'INSERT INTO winners_of_this_week (id_wallet_address, id_social_username, winners_of_this_week.rank, reward, balance, completed_level) VALUES';
+
     /* ================= Insert the default winners into winnersOfThisWeek ================ */
 
     //  Get random order of id_wallet_addresses of default winners
@@ -184,8 +197,60 @@ exports.updateWinnersOfThisWeek = async (req, res) => {
     //  Get 2 different random ranks between top 5
     if (winnersOfThisWeek.length < 5) {
       //  If the number of all winners is less than 5.
-      if (winnersOfThisWeek.length > 0) {
-        randomRanks = await get2RandomIntegers(0, winnersOfThisWeek.length);
+      if (winnersOfThisWeek.length > 1) {
+        randomRanks = await get2RandomIntegers(0, winnersOfThisWeek.length - 1);
+      } else if (winnersOfThisWeek.length == 1) {
+
+        /* ===================== If the number of real winner is 1 ===================== */
+        //  Give the default winners their data randomly
+        for (let i = 0; i < ID_WALLET_ADDRESS_OF_DEFAULT_WINNERS.length; i += 1) {
+          let walletAddressData = null;
+          let winner = {};
+
+          //  id_wallet_address
+          winner.id_wallet_address = randomIdWalletAddress[i];
+
+          walletAddressData = (await db.query(`
+            SELECT balance, id_social_username
+            FROM wallet_addresses WHERE id = ${winner.id_wallet_address};
+          `))[0];
+
+          //  id_social_username
+          winner.id_social_username = walletAddressData.id_social_username;
+
+          //  balance
+          winner.balance = walletAddressData.balance;
+
+          //  completed_level
+          winner.completed_max_level = winnersOfThisWeek[0].completed_max_level + i + 1;
+
+          winnersOfThisWeek.splice(0, 0, winner);
+        }
+
+        winnersOfThisWeek.forEach((element, i) => {
+          let {
+            id_wallet_address,
+            id_social_username,
+            balance,
+            completed_max_level
+          } = element;
+
+          let reward = rewardPercentages[i].reward_percentage * balanceOfRewardPool / 100;
+
+          insertQueryOfThisWeek += `(${id_wallet_address}, ${id_social_username}, ${i + 1}, ${Number(reward.toFixed(2))}, ${balance}, ${completed_max_level}), `;
+        });
+
+        insertQueryOfThisWeek = insertQueryOfThisWeek.substring(0, insertQueryOfThisWeek.length - 2);
+        //  Delete all records from the tables 'winners_of_this_week' and 'winners_of_last_week'
+        await db.query(`DELETE FROM winners_of_this_week;`);
+        await db.query('ALTER TABLE winners_of_this_week AUTO_INCREMENT = 1;');
+
+        //  Insert new winners
+        await db.query(insertQueryOfThisWeek);
+
+        return true;
+        /* ============================================================================== */
+
       } else {
         //  Delete all records from the tables 'winners_of_this_week' and 'winners_of_last_week'
         await db.query(`DELETE FROM winners_of_this_week;`);
@@ -223,24 +288,16 @@ exports.updateWinnersOfThisWeek = async (req, res) => {
 
     /* ==================================================================================== */
 
-    //  Get the percentages of reward by rank
-    const rewardPercentages = await db.query(`SELECT * FROM rank_reward;`);
-
-    //  Get the balance of reward pool
-    const balanceDataOfRewardPool = await (await fetch(`https://api.bscscan.com/api?module=account&action=balance&address=${ADDRESS_OF_REWARD_POOL}&tag=latest&apikey=${SCAN_API_KEY}`)).json();
-    balanceOfRewardPool = Number(balanceDataOfRewardPool.result) * 10 ** -18;
-
     //  Delete all records from the tables 'winners_of_this_week' and 'winners_of_last_week'
     await db.query(`DELETE FROM winners_of_this_week;`);
     await db.query('ALTER TABLE winners_of_this_week AUTO_INCREMENT = 1;');
 
-    //  Insert winners of this week into table 'winners_of_this_week'
-    let insertQueryOfThisWeek = 'INSERT INTO winners_of_this_week (id_wallet_address, id_social_username, winners_of_this_week.rank, reward, balance, completed_level) VALUES';
-
+    //  Attach the reward percentage of each winner
     winnersOfThisWeek.forEach((element, index) => {
       element.rank = index + 1;
       element.rewardPercentage = rewardPercentages[index].reward_percentage;
     });
+
 
     const winnersOfThisWeekByCompletedMaxLevel = groupBy(winnersOfThisWeek, "completed_max_level");
 
@@ -255,12 +312,12 @@ exports.updateWinnersOfThisWeek = async (req, res) => {
       averageReward = balanceOfRewardPool * (sumOfRewardPercentages / winnersOfThisWeekByCompletedMaxLevel[element].length) / 100;
 
       winnersOfThisWeekByCompletedMaxLevel[element].forEach(_element => {
-        let { 
-          id_wallet_address, 
-          id_social_username, 
-          balance, 
-          completed_max_level, 
-          rank 
+        let {
+          id_wallet_address,
+          id_social_username,
+          balance,
+          completed_max_level,
+          rank
         } = _element;
 
         insertQueryOfThisWeek += `(${id_wallet_address}, ${id_social_username}, ${rank}, ${Number(averageReward.toFixed(2))}, ${balance}, ${completed_max_level}), `;
@@ -315,7 +372,7 @@ exports.getWinners = async (req, res) => {
       FROM winners_of_this_week
       LEFT JOIN wallet_addresses ON winners_of_this_week.id_wallet_address = wallet_addresses.id
       LEFT JOIN social_usernames ON winners_of_this_week.id_social_username = social_usernames.id
-      ORDER BY winners_of_this_week.reward DESC, winners_of_this_week.balance DESC;
+      ORDER BY winners_of_this_week.rank ASC, winners_of_this_week.balance DESC;
     `));
     winnersOfLastWeek = (await db.query(`
       SELECT
@@ -329,7 +386,7 @@ exports.getWinners = async (req, res) => {
       FROM winners_of_last_week
       LEFT JOIN wallet_addresses ON winners_of_last_week.id_wallet_address = wallet_addresses.id
       LEFT JOIN social_usernames ON winners_of_last_week.id_social_username = social_usernames.id
-      ORDER BY winners_of_last_week.reward DESC, winners_of_last_week.balance DESC;;
+      ORDER BY winners_of_last_week.rank ASC, winners_of_last_week.balance DESC;;
     `));
     return res.status(200).send({ winnersOfThisWeek, winnersOfLastWeek });
   } catch (error) {
@@ -439,66 +496,4 @@ exports.getAccessToken = async (req, res) => {
   }
 };
 
-/**
- * Get 2 random ranks between "min" and "max"
- * @param {*} min The minimum value of random scope
- * @param {*} max The maximum value of random scope
- * @returns 2 random intergers between "min" and "max"
- */
-const get2RandomIntegers = (min = 0, max) => {
-  let randomInteger1 = 0;
-  let randomInteger2 = 0;
 
-  randomInteger1 = Math.floor(Math.random() * (max - min + 1)) + min;
-  do {
-    randomInteger2 = Math.floor(Math.random() * (max - min + 1)) + min;
-  } while (randomInteger2 === randomInteger1 || randomInteger2 < 1);
-
-  return [randomInteger1, randomInteger2];
-};
-
-/**
- * Get random completed level of randomRank
- * @param {*} randomRank Rank that was generated by random
- * @param {*} winnersOfThisWeek Winners of this week
- * @returns A Random completed level
- */
-const getRandomCompletedLevel = (randomRank, winnersOfThisWeek) => {
-  console.log('# randomRank => ', randomRank);
-  let completedLevel = 0;
-  // Math.floor(Math.random() * (max - min + 1)) + min;
-
-  if (randomRank == 0) {
-    let { completed_max_level } = winnersOfThisWeek[0];
-
-    //  Get random completed_max_level
-    completedLevel = Math.floor(
-      Math.random() * (completed_max_level + LIMIT_SCOPE_OF_COMPLETED_LEVEL - completed_max_level + 1)
-    ) + completed_max_level;
-  } else {
-    let maxCompletedLevel = winnersOfThisWeek[randomRank - 1].completed_max_level;
-    let minCompletedLevel = winnersOfThisWeek[randomRank].completed_max_level;
-
-    completedLevel = Math.floor(
-      Math.random() * (maxCompletedLevel - minCompletedLevel + 1)
-    ) + minCompletedLevel;
-  }
-  return completedLevel;
-};
-
-/**
- * Check whether the default winner was already existed in DB or not.
- * @param {string} walletAddress The address of a wallet
- * @returns Boolean value - If that wallet is existed in DB, the return value is true. Else, false
- */
-const checkWalletAddressExistence = async (walletAddress) => {
-  const walletInfo = await (await db.query(`
-    SELECT * FROM wallet_addresses WHERE wallet_address = '${walletAddress}'
-  `))[0];
-
-  if (walletInfo) {
-    return true;
-  } else {
-    return false;
-  }
-};
