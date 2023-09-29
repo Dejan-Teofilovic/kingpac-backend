@@ -9,15 +9,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mr-new-0509/kingpac-backend.git"
+    "url": "git+https://github.com/Dejan-Teofilovic/kingpac-backend.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/mr-new-0509/kingpac-backend/issues"
+    "url": "https://github.com/Dejan-Teofilovic/kingpac-backend/issues"
   },
-  "homepage": "https://github.com/mr-new-0509/kingpac-backend#readme",
+  "homepage": "https://github.com/Dejan-Teofilovic/kingpac-backend#readme",
   "dependencies": {
     "axios": "^0.26.0",
     "cors": "^2.8.5",

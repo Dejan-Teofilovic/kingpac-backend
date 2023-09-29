@@ -6,9 +6,9 @@
 [![Live site](live-site-2.png)](https://kingpactoken.com)
 
 ## Contact info
-- **Email:** mr.new0509@gmail.com
-- **Telegram:** [@mrnew0509](https://t.me/mrnew0509)
-- **Skype:** sin085
+- **Email:** dejanteofilovic2@gmail.com
+- **Discord:** [dejan_teofilovic](https://discord.gg/PztT2r5U)
+
 
 ## Release date
 May 27, 2022
